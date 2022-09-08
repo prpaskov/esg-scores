@@ -12,4 +12,6 @@ This repository contains the following ipynb files:
 
 -predict_gov_score - performs hashingvectorizer on 10K text data; then runs features through a pre-processing pipeline. Conducts dimensionality reduction on features and tests models with CV gridsearch to predict ESG governance scores (and thus impute missing values).
 
+-data_vis - contains exploratory datavis, some plots of which are shown in the overview file.
+
 Complementary csv and txt files are also included in this repository.
