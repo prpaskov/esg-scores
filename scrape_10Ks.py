@@ -1,62 +1,49 @@
-from sec_api import QueryApi
-from sec_api import ExtractorApi
-import requests
-import re
+from sec_api import QueryApi, ExtractorApi
+from datetime import datetime
+import requests, re, os
 import pandas as pd
 import numpy as np
-from datetime import datetime
-import os
+from configs import Configs as scrapeConfigs
 
 class scrape_10K_filings:
     """
-    This file gets the URLS needed to scrape text from 10-K filings, 
-    then scrapes the URLS and saves text output.
+    This file gets the URLS needed to scrape text from 10-K filings, scrapes the URLS, and saves text output into text_scrape_folder.
 
     Attributes:
-        raw_file_name (str): file to write raw URLs to (txt)
-        output_file_name (str): file to write formatted URLs to (csv)
-        master_file_name (str): file in which to merge URLs
-        text_scrape_folder (str): file to which text is saved
-        filing_type (Literal): filing type to extract URLs from. Default 10-K.
         year_start (str): starting year to extract
         year_end (str): ending year to extract
         quick_run (bool): if True, skips 90% of filings. Only True for testing. Default False.
     """
     def __init__(self, 
-                raw_file_name: str = 'urls.txt',
-                output_file_name: str = 'url_10k.csv', 
-                master_file_name: str = 'master.csv', 
-                text_scrape_folder: str = '10K'
-                filing_type: Literal['10-K'] = '10-K', 
                 year_start: str, 
                 year_end: str, 
                 quick_run: bool = False):
         
-        self.raw_file_name = raw_file_name
-        self.output_file_name = output_file_name
-        self.master_file_name = master_file_name
-        self.text_scrape_folder = text_scrape_folder
-        self.filing_type = filing_type
+        self.paths = scrapeConfigs.path_dict
         self.year_start = year_start
         self.year_end = year_end
         self.quick_run = quick_run 
         self.queryApi, self.extractorApi = self.get_query_and_extractor_Api()
     
-        self.get_unformatted_url_set()
+        self.get_raw_url_set()
         self.get_formatted_url_set()
         self.scrape_records()
 
     def get_query_and_extractor_Api(self):
+        """
+        Returns query and extractor API
+        """
         query = QueryApi(api_key=Configs.apiKey)
         extractor = ExtractorApi(api_key=Configs.apiKey)
         return query, extractor
 
-    def get_url(self,filing):
+    def get_url(self, filing:str):
         """
-        Returns a single company-fiscalyear URL for a filing
+        Takes in the 'filing' item in the dict returned from self.queryApi.get_filings(base_query)
+        Returns a single company-fiscal-year URL for a filing
         """
         for i in filing['documentFormatFiles']:
-            if 'description' in i and i['description'] == self.filing_type:
+            if 'description' in i and i['description'] == '10-K':
                 try:
                     return i['documentUrl'], filing['periodOfReport'], filing['cik']
                 except:
@@ -65,6 +52,9 @@ class scrape_10K_filings:
         return None
 
     def get_starting_base_query(self): 
+        """
+        Returns base query. get_uniformed_url_set later fills in base_query['query']['query_string']['query'] (defined here as "Placeholder") then runs the query through self.queryApi.get_filings(base_query).
+        """
         base_query = {
             "query": { 
                 "query_string": { 
@@ -78,16 +68,15 @@ class scrape_10K_filings:
             }
         return base_query
     
-    def get_unformatted_url_set(self): 
+    def get_raw_url_set(self): 
         """
-        Outputs a txt file with a full URL set for the specified filing within year_start and year_end
+        Outputs an raw txt file (saved as paths.raw_urls) with a full URL set for 10-Ks within year_start and year_end.
         """
-
         base_query = self.get_starting_base_query()
 
         #overwrites any existing file by default
-        os.remove(self.raw_file_name)
-        log_file = open(self.raw_file_name, "a")
+        os.remove(paths.raw_urls)
+        log_file = open(paths.raw_urls, "a")
 
         for year in range(self.year_start, self.year_end - 1, -1):
             print("starting {year}".format(year=year))
@@ -97,7 +86,7 @@ class scrape_10K_filings:
             # get 10-K and 10-K/A filings filed in year and month
             # resulting query example: "formType:\"10-K\" AND filedAt:[2021-01-01 TO 2021-01-31]"
                 universe_query = \
-                    "formType:\"{filing_type}\" AND ".format(filing_type=self.filing_type) + \
+                    "formType:\"10-K\" AND ".format(filing_type='10-K') + \
                     "filedAt:[{year}-{month:02d}-01 TO {year}-{month:02d}-31]" \
                     .format(year=year, month=month)
                 print(universe_query)
@@ -132,10 +121,37 @@ class scrape_10K_filings:
 
         log_file.close()
         print('done')
+    
+    def get_formatted_url_set(self):
+        """
+        Reads raw URLS from scrapeConfigs.raw_urls
+        Reformats
+        Outputs formatted URLs to scrapeConfigs.clean_urls
+        """
+        url = pd.read_csv(paths.raw_urls, header=None)
+        url.columns = ['url', 'date', 'CIK']
+        url['date'] = url['date'].astype(str)
+
+        #generate most recent indicator
+        url['date'] = url['date'].apply(self.convertStrToDate)
+        maxUrlDate = url.groupby(['CIK'])['date'].idxmax()
+        print(maxUrlDate)
+        url['mostrecent'] = 0
+        url.loc[maxUrlDate.values,'mostrecent'] = 1
+        print(url)
+        master = pd.read_csv(paths.master)
+        url_10k = url.merge(master, on='CIK')
+        url_10k.to_csv(paths.clean_urls) 
+
+    def convertStrToDate(self, string_date:str):
+        """
+        Takes in string date, returns datetime format
+        """
+        return datetime.strptime(string_date, '%Y-%m-%d')
 
     def extract_items(self, filing_url:str):
         """
-        Extracts specified items from one given URL
+        Extracts 10K items from a given URL.
         """
         info = []
         items = ["1", "1A", "1B", "2", "3", "4", "5", "6", "7", 
@@ -150,41 +166,15 @@ class scrape_10K_filings:
             print(e)
         return info
     
-    def get_formatted_url_set(self):
-        """
-        Reads raw URLS from self.raw_file_name
-        Reformats
-        Outputs formatted URLs to self.output_file_name
-        """
-        url = pd.read_csv(self.raw_file_name, header=None)
-        url.columns = ['url', 'date', 'CIK']
-        url['date'] = url['date'].astype(str)
-
-        #generate most recent indicator
-        url['date'] = url['date'].apply(self.convertStrToDate)
-        maxUrlDate = url.groupby(['CIK'])['date'].idxmax()
-        print(maxUrlDate)
-        url['mostrecent'] = 0
-
-        url.loc[maxUrlDate.values,'mostrecent'] = 1
-        print(url)
-        master = pd.read_csv(self.master_file_name)
-        url_10k = url.merge(master, on='CIK')
-        url_10k.to_csv(self.output_file_name) 
-
-    def convertStrToDate(self, s):
-        """
-        Takes in string date, returns datetime format
-        """
-        return datetime.strptime(s, '%Y-%m-%d')
-
-
     def scrape_records(self): 
-        data = pd.read_csv(self.output_file_name)
+        """
+        Runs through URLs in paths.clean_urls and extracts text from 10Ks via extract_items, then saves the text output to paths.text_scrape_folder.
+        """
+        data = pd.read_csv(paths.clean_urls)
         data['CIK'] = data['CIK'].astype(str)
         for x in range(len(data)):
             if data['mostrecent'][x] == 1:
-                log_file = open(self.text_scrape_folder+data['CIK'][x]+'_'+data['Symbol'][x], "a")
-                info = extract_items_10k(data['url'][x])
+                log_file = open(paths.text_scrape_folder+data['CIK'][x]+'_'+data['Symbol'][x], "a")
+                info = extract_items(data['url'][x])
                 log_file.write(",".join(info))
                 log_file.close()
