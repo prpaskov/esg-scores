@@ -10,29 +10,31 @@ from configs import Configs
 
 class dataViz:
     """
+    This class generates the master.csv data file and 
     """
     def __init__(self):
-        vizConfigs = Configs()
+        self.vizConfigs = Configs()
         self.data_dict = self.make_data_dict()
         #other instances
     
     def make_data_dict(self):
         """
         Reads in Bloomberg, companies, and industry data. 
-        Merges dfs into a master df.
+        Merges dfs into a master df; saves output.
         Generates data dictionary.
         """
         data_dict = {}
         for df_name in ['bloomberg', 'companies', 'industries']:
             try:
-                df = pd.read_excel(vizConfigs.path_dict[df_name])
+                df = pd.read_excel(self.vizConfigs.path_dict[df_name])
             except:
-                df = pd.read_csv(vizConfigs.path_dict[df_name])
+                df = pd.read_csv(self.vizConfigs.path_dict[df_name])
             data_dict[df_name] = df
 
         data_dict['bloomberg']['Symbol'] = data_dict['bloomberg']['ID'].str.split(' ').str[0]
         master = data_dict['bloomberg'].merge(data_dict['companies'], on='Symbol') 
         master = master.rename(columns={"ESG_SCORE": "ESG", "ENVIRONMENTAL_SCORE": "Environmental", "SOCIAL_SCORE": "Social", "GOVERNANCE_SCORE": "Governance"})
+        master.to_csv(self.vizConfigs.path_dict['master'])
         data_dict['master'] = master
         return data_dict
 

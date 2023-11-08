@@ -3,7 +3,7 @@ from datetime import datetime
 import requests, re, os
 import pandas as pd
 import numpy as np
-from configs import Configs as scrapeConfigs
+from configs import Configs 
 
 class scrape_10K_filings:
     """
@@ -19,7 +19,8 @@ class scrape_10K_filings:
                 year_end: str, 
                 quick_run: bool = False):
         
-        self.paths = scrapeConfigs.path_dict
+        self.scrapeConfigs = Configs()
+        self.paths = self.scrapeConfigs.path_dict
         self.year_start = year_start
         self.year_end = year_end
         self.quick_run = quick_run 
@@ -124,9 +125,9 @@ class scrape_10K_filings:
     
     def get_formatted_url_set(self):
         """
-        Reads raw URLS from scrapeConfigs.raw_urls
+        Reads raw URLS from paths.raw_urls
         Reformats
-        Outputs formatted URLs to scrapeConfigs.clean_urls
+        Outputs formatted URLs to paths.clean_urls
         """
         url = pd.read_csv(paths.raw_urls, header=None)
         url.columns = ['url', 'date', 'CIK']
