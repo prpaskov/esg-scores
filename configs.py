@@ -14,7 +14,7 @@ class Configs:
                           'prediction_output': f'{self.data_path}/predictions.csv'
                          }
         self.test_size = '.2'
-        self.ngram_range = (1,1)
+        self.ngram_range = (2,1)
         self.max_depth = np.linspace(10, 40, 4)
         self.n_components = [10,15]
         self.ridge_alpha = [1e-1]
