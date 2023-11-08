@@ -1,3 +1,5 @@
+Note: this repo is currently under construction and may require additional debugging
+
 ## Context
 Environmental, social, and governance (ESG) scores plays an increasingly important role in investors' decisions. According to JP Morgan, 500 billion dollars of investments flowed into ESG funds in 2021. Yet, ESG data is marked by missing data, unclear reporting standards and biased reporting. For S&P 500 companies, or the 500 leading publicly traded companies in the U.S, Bloomberg ESG ratings, touted as one of the best ESG ratings, only provide a ESG score for 134 of 500 companies, a social and environmental score for 411 companies, and a governance score for 481 companies. Socially conscious investors need more complete data. This repository contains the codes and files, including text-scraped 10K forms, to impute missing Bloomberg ESG Governance scores for S&P 500 companies. 
 
@@ -13,4 +15,3 @@ This repository contains the following files:
 * excute.ipynb - runs classes and visualizes Bloomberg data. Insert API key in configs.py file prior to running.
 
 Author - prpaskov 
-Note: this repo is currently under construction and may require additional debugging
