@@ -163,8 +163,8 @@ class scrape_10K_filings:
                                                 section=item, 
                                                 return_type="text")
                 info.append(section_text)    
-        except Exception as e:
-            print(e)
+            except Exception as e:
+                print(e)
         return info
     
     def scrape_records(self): 

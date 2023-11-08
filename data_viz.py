@@ -10,12 +10,11 @@ from configs import Configs
 
 class dataViz:
     """
-    This class generates the master.csv data file and 
+    This class generates the master.csv data file and data viz
     """
     def __init__(self):
         self.vizConfigs = Configs()
         self.data_dict = self.make_data_dict()
-        #other instances
     
     def make_data_dict(self):
         """
@@ -63,31 +62,25 @@ class dataViz:
         esg = score_chart.encode(
             x='ESG',
             y='Sector',
-            color=alt.value(viz_config_dict['ESG']),
+            color=alt.value(viz_config_dict['ESG'])
         )
 
         # Chart for Governance scores
         gov = score_chart.encode(
             x='Governance',
             y='Sector',
-            color=alt.value(viz_config_dict['Governance']),
+            color=alt.value(viz_config_dict['Governance'])
         )
 
         # Chart for Social scores
         soc = score_chart.encode(
             x='Social',
             y='Sector',
-            color=alt.value(viz_config_dict['Social']),
-        )
-
-         env = score_chart.encode(
-            x='Environmental',
-            y='Sector',
-            color=alt.value(viz_config_dict['Environmental']),
+            color=alt.value(viz_config_dict['Social'])
         )
 
         # Combine the three charts
-        combined_chart = esg + gov + soc + env
+        combined_chart = esg + gov + soc
 
         # Create a legend by using point marks and a separate chart
         legend_chart = alt.Chart(legend).mark_point(filled=True).encode(
@@ -116,16 +109,13 @@ class dataViz:
         plt.title('Non-missing Bloomberg ESG Scores \nS&P 500 Companies', fontsize = 14)
         plt.show
 
-    def plot_scatter(self,
-                     x_score: Literal['ESG', 'Environmental', 'Social', 'Governance'],
-                     y_score: Literal['ESG', 'Environmental', 'Social', 'Governance'])
+    def plot_scatter(self,x_score,y_score)
         """
         Plots a scatterplot of two different ESG score types
         """
         sns.scatterplot(data=self.data_dict['master'], y=y_score,x=x_score, hue='Sector', marker='+')
 
-    def plot_score_by_sector(self,
-                             score_type: Literal['ESG', 'Environmental', 'Social', 'Governance'])
+    def plot_score_by_sector(self,score_type)
         """
         Takes in score_type (i.e. "ESG") and returns a plot of that score by sector
         """

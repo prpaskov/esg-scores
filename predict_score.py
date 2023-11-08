@@ -1,8 +1,9 @@
 from doctest import DocFileTest
 import re
+import scipy
+import spacy
 import pandas as pd
 import numpy as np
-import scipy
 import scipy.sparse
 from sklearn.decomposition import PCA, TruncatedSVD
 from sklearn.feature_extraction.text import TfidfTransformer, TfidfVectorizer, HashingVectorizer
@@ -23,17 +24,19 @@ from sklearn.model_selection import GridSearchCV
 from configs import Configs 
 
 class predictScore:
-    def __init__(self, 
-                 score_to_predict: Literal['ESG', 'Governance', 'Social', 'Environmental'] = 'Governance'):
+    """
+    This class runs hash vectorizer on text data, generates feature datasets, then predicts ESG score after running CV grid search. It runs data viz for train/test predictions and saves predictions as output.
+    """
+    def __init__(self, score_to_predict = 'Governance'):
         self.predictConfigs = Configs()
         self.paths = self.predictConfigs.path_dict
         self.score_to_predict = score_to_predict
 
-        self.master_df, self.hashed, self.feature_df = self.generate_pipeline_data()
-        self.pipeline = self.generate_pipeline()
-        self.train_test_dict = self.get_train_test_dict()
-        self.search = self.run_grid_search()
-        self.get_predictions()
+        #self.master_df, self.hashed, self.feature_df = self.generate_pipeline_data()
+        #self.pipeline = self.generate_pipeline()
+        #self.train_test_dict = self.get_train_test_dict()
+        #self.search = self.run_grid_search()
+        #self.get_predictions()
     
     def generate_pipeline_data(self):
         """
@@ -44,22 +47,26 @@ class predictScore:
         feature_df = self.get_cat_and_num_features()
         return master_df, hashed, feature_df
 
-    def get_master_df(self)
+    def get_master_df(self):
         """
         Returns a data_dict with master, train, and test.
         """
         df = pd.read_csv(self.paths['master'])
-        master = df.dropna(subset=[self.score_to_predict])
+        master_df = df[~df[self.score_to_predict].isna()]
+        test_mask = np.random.rand(len(master_df)) < .2
+        print(test_mask.shape)
+        master_df['test'] = test_mask
+        assert master_df['test'].ndim == 1, "master['test'] must be a 1-D array"
 
-        np.random.seed(93)  
-        test_mask = np.random.rand(len(master)) < self.predictConfigs.test_size  
-        master['test'] = test_mask
-        master['train'] = master[~master['test']]
-        return master
+        master_df['train'] = ~master_df['test']
+        assert master_df['train'].ndim == 1, "master['train'] must be a 1-D array"
+
+        return master_df
+        
 
     def run_hashing_iter(self, i:int):
         """
-        Runs one iteration of hashing. Called in a loop in hashing_vectorizer.
+        Runs one iteration of hashing. 
         """
         temp = self.master_df[['Symbol', 'CIK']]
         temp['10K'] = ''
@@ -200,7 +207,7 @@ class predictScore:
         preds = final_df[[self.score_to_predict, 'predicted', 'Name']]
         preds.to_csv(self.paths.prediction_output)
     
-    def plot_predictions(self, true_values, predictions, train_test: Literal['Training', 'Testing']):
+    def plot_predictions(self, true_values, predictions, train_test):
         """
         Plots predictions of train/test set relative to true values (Scatterplot)
         """
