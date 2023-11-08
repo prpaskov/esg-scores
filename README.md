@@ -1,10 +1,10 @@
-##Context
+## Context
 Environmental, social, and governance (or ESG) scores plays an increasingly important role in investor’s decisions. According to JP Morgan, 500 Billion dollars of investments flowed into ESG funds in 2021. Yet, ESG data is marked by missing data, unclear reporting standards and biased reporting. For S&P 500 companies, or the 500 leading publicly traded companies in the U.S, Bloomberg ESG ratings, touted as one of the best ESG ratings, only provide a ESG score for 134 of 500 companies, a social and environmental score for 411 companies, and a governance score for 481 companies. Socially conscious investors need more complete data. This repository contains the codes and files, including text scraped 10K forms, to impute missing Bloomberg ESG Governance scores for S&P 500 companies. 
 
-##Methodology
+## Methodology
 In this project, I develop a process to impute missing ESG scores for S&P 500 Companies. I begin with the Bloomberg Governance Score, which is the most numerous. I rely heavily on text-scraped 10K documents. Given the size of the 10K reports, I employ HashVectorizer to obtain partial fits in batches. I merge the resulting columns with an additional matrix of numerical features (i.e. number of employees, market cap) and one-hot-encoded categorical features (i.e. sector, state). I run these features through a pipeline that applies TFIDF on the text sparse matrix; applies standard scaler to all features; runs singular value decomposition on all features; then predicts the Bloomberg Governance Score with a range of models including Ridge and Random Forest. The pipeline applies GridSearchCV for hyperparameter optimization. Code generates plots of predictions and true values on the test and train set.
 
-##Files
+## Files
 This repository contains the following files:
 * ESG Seeing Through the Smog - overview. 
 * 01_scrape_10Ks.py - gets all URLS of S&P500 10-Ks uploaded to the gov website between STARTDATE and ENDDATE and saves these URLS in urls.txt. URLs are idiosyncratic so this step is critical to laying the ground for text scraping. Then takes URLs and returns as object "info" all text from the 10-K associated with that URL, saving this text to file.
