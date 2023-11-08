@@ -6,10 +6,10 @@ This repo develops the process to use tax filing text to impute missing ESG scor
 
 ## Files
 This repository contains the following files:
-* scrape_10Ks.py - gets all URLS of S&P500 10-Ks uploaded to the gov website between STARTDATE and ENDDATE and saves these URLS in urls.txt. URLs are idiosyncratic so this step is critical to laying the ground for text scraping. Then takes URLs and returns as object "info" all text from the 10-K associated with that URL, saving this text to file.
-* gen_and_viz_data.py - joins data from Bloomberg, Nasdaq, and SEC to generate a master data file w/ ticker and CIK for S&P 500 companies, then saves to file. Includes classes to visualize data by score/sector and missing data patterns.
-* predict_score.py - performs hashingvectorizer on 10K text data; then runs features through a pre-processing pipeline. Conducts dimensionality reduction on features and tests models with CV gridsearch to predict ESG governance scores (and thus impute missing values). Saves predictions to file.
+* scrape_10Ks.py - gets all URLS of S&P500 10-Ks uploaded to the gov website between STARTDATE and ENDDATE and saves these URLs to data/url_10k.csv. URLs are idiosyncratic so this step is critical to laying the ground for text scraping. Then takes in URLs and returns as object "info" specified text from the associated 10-K associated and saves this text within data/10K as a txt file.
+* gen_and_viz_data.py - joins data from Bloomberg, Nasdaq, and SEC to generate a master data file w/ ticker and CIK for S&P 500 companies. Saves to file. Includes functions to visualize scores and missing data patterns.
+* predict_score.py - performs hashingvectorizer on 10K text data, generates feature dataset, runs features through a pre-processing pipeline. Runs CV gridsearch with hyperparameter ranges defined in configs.py. Uses best hyperparameters to predict ESG governance scores (and thus impute missing values). Saves predictions to file.
 * configs.py - contains file paths and hyperparameter ranges
-* excute.ipynb can be adapted and run to call classes and plots Bloomberg scores (pre-prediction). Insert API key in configs.py file prior to running.
+* excute.ipynb - runs classes and visualizes Bloomberg data. Insert API key in configs.py file prior to running.
 
 Author - prpaskov 
