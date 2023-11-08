@@ -10,7 +10,7 @@ from configs import Configs
 
 class dataViz:
     """
-    This class generates the master.csv data file and data viz
+    This class generates the master.csv data file and contains functions for data viz.
     """
     def __init__(self):
         self.vizConfigs = Configs()
