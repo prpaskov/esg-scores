@@ -13,3 +13,4 @@ This repository contains the following files:
 * excute.ipynb - runs classes and visualizes Bloomberg data. Insert API key in configs.py file prior to running.
 
 Author - prpaskov 
+Note: this repo is currently under construction and may require additional debugging
