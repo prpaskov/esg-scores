@@ -10,15 +10,16 @@ from configs import Configs
 
 class dataViz:
     """
-    This class generates the master.csv data file and 
+    This class generates the master.csv data file and data visualizations
     """
     def __init__(self):
         self.vizConfigs = Configs()
         self.data_dict = self.make_data_dict()
-        #other instances
     
-    def make_data_dict(self):
+    def make_data_dict(self, export:bool = False):
         """
+        Args:
+            Export: exports master_df to self.vizConfigs.path_dict['master'] if True (default False)
         Reads in Bloomberg, companies, and industry data. 
         Merges dfs into a master df; saves output.
         Generates data dictionary.
@@ -34,50 +35,45 @@ class dataViz:
         data_dict['bloomberg']['Symbol'] = data_dict['bloomberg']['ID'].str.split(' ').str[0]
         master = data_dict['bloomberg'].merge(data_dict['companies'], on='Symbol') 
         master = master.rename(columns={"ESG_SCORE": "ESG", "ENVIRONMENTAL_SCORE": "Environmental", "SOCIAL_SCORE": "Social", "GOVERNANCE_SCORE": "Governance"})
-        master.to_csv(self.vizConfigs.path_dict['master'])
         data_dict['master'] = master
+        if export:
+            master.to_csv(self.vizConfigs.path_dict['master'])
         return data_dict
 
     def plot_scores(self):
         """
         Plots scores for all ESG types in one plot
         """
-        viz_config_dict = {'ESG': 
-                       {'color': 'turquoise',
-                    },
+        viz_config_dict = {
+                    'ESG': 
+                       {'color': 'turquoise'},
                    'Governance': 
-                       {'color': 'orange',
-                    },
+                       {'color': 'orange'},
                    'Social': 
-                       {'color': 'green',
-                    },
+                       {'color': 'green'},
                     'Environmental': 
-                       {'color': 'pink',
-                    }
-                  }
+                       {'color': 'pink'}
+                        }
 
         legend = pd.DataFrame({
             'Score Type': list(viz_config_dict.keys()),
             'Color': [viz_config_dict[st]['color'] for st in viz_config_dict.keys()]
         })
-        # Base chart for the scores with the legend DataFrame
+
         score_chart = alt.Chart(self.data_dict['master']).mark_point()
 
-        # Chart for ESG scores
         esg = score_chart.encode(
             x='ESG',
             y='Sector',
             color=alt.value(viz_config_dict['ESG']['color']),
         )
 
-        # Chart for Governance scores
         gov = score_chart.encode(
             x='Governance',
             y='Sector',
             color=alt.value(viz_config_dict['Governance']['color']),
         )
 
-        # Chart for Social scores
         soc = score_chart.encode(
             x='Social',
             y='Sector',
@@ -90,16 +86,11 @@ class dataViz:
             color=alt.value(viz_config_dict['Environmental']['color']),
         )
 
-        # Combine the three charts
         combined_chart = esg + gov + soc + env
-
-        # Create a legend by using point marks and a separate chart
         legend_chart = alt.Chart(legend).mark_point(filled=True).encode(
             y=alt.Y('Score Type:N', axis=alt.Axis(orient='right')),
             color=alt.Color('Color:N', scale=None)
         )
-
-        # Combine the score chart with the legend
         final_chart = (combined_chart | legend_chart).resolve_legend(
             color="independent"
         )
